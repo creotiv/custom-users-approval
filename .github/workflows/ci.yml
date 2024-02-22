@@ -55,8 +55,5 @@ jobs:
         id: test-action
         uses: ./
         with:
-          milliseconds: 2000
-
-      - name: Print Output
-        id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config: .github/custom_approval.yml # Config file loc

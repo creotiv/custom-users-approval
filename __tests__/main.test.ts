@@ -1,89 +1,103 @@
-/**
- * Unit tests for the action's main functionality, src/main.ts
- *
- * These should be run as if the action was called from a workflow.
- * Specifically, the inputs listed in `action.yml` should be set as environment
- * variables following the pattern `INPUT_<INPUT_NAME>`.
- */
-
 import * as core from '@actions/core'
-import * as main from '../src/main'
+import { Context } from '@actions/github/lib/context';
+import { run } from '../src/main';
+import { Octokit } from '@octokit/rest';
 
-// Mock the action's main function
-const runMock = jest.spyOn(main, 'run')
+jest.mock('@actions/core', () => ({
+    getInput: jest.fn(),
+    setFailed: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+    startGroup: jest.fn(),
+    endGroup: jest.fn(),
+    warning: jest.fn(),
+}));
+jest.mock('@octokit/rest', () => ({
+    Octokit: jest.fn().mockImplementation(() => ({
+        paginate: jest.fn(),
+        rest: {
+            teams: {
+                listMembersInOrg: jest.fn(),
+            },
+            pulls: {
+                listReviews: jest.fn(),
+            },
+            repos: {
+                getContent: jest.fn(),
+            },
+        },
+    })),
+}));
 
-// Other utilities
-const timeRegex = /^\d{2}:\d{2}:\d{2}/
+const context = {
+    eventName: 'push',
+    sha: 'fakeSha',
+    ref: 'refs/heads/fake-branch',
+    workflow: 'fakeWorkflow',
+    action: 'fakeAction',
+    actor: 'fakeActor',
+    job: 'fakeJob',
+    runNumber: 123,
+    runId: 123456,
+    payload: {
+        pull_request: {
+            number: 1,
+        }
+    },
+    repo: {
+        owner: 'fakeOwner',
+        repo: 'fakeRepo',
+    },
+    issue: {
+        owner: 'fakeOwner',
+        repo: 'fakeRepo',
+        number: 1,
+    },
+};
+const fakeContext = context as Context;
 
-// Mock the GitHub Actions core library
-let debugMock: jest.SpyInstance
-let errorMock: jest.SpyInstance
-let getInputMock: jest.SpyInstance
-let setFailedMock: jest.SpyInstance
-let setOutputMock: jest.SpyInstance
+const getContentData = `groups:
+    fake-team:
+        members:
+            - user1
+        required: 1`
 
-describe('action', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
+beforeEach(() => {
+    jest.clearAllMocks();
+});
 
-    debugMock = jest.spyOn(core, 'debug').mockImplementation()
-    errorMock = jest.spyOn(core, 'error').mockImplementation()
-    getInputMock = jest.spyOn(core, 'getInput').mockImplementation()
-    setFailedMock = jest.spyOn(core, 'setFailed').mockImplementation()
-    setOutputMock = jest.spyOn(core, 'setOutput').mockImplementation()
-  })
 
-  it('sets the time output', async () => {
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation((name: string): string => {
-      switch (name) {
-        case 'milliseconds':
-          return '500'
-        default:
-          return ''
-      }
-    })
+describe('run function', () => {
+    it('ok run', async () => {
+        const octokit = new Octokit();
 
-    await main.run()
-    expect(runMock).toHaveReturned()
+        (octokit.paginate as unknown as jest.Mock).mockImplementation((method, params) => {
+            if (method === octokit.rest.teams.listMembersInOrg) {
+                return Promise.resolve([{ login: 'user1' }, { login: 'user2' }, { login: 'user5' }]);
+            } else if (method === octokit.rest.pulls.listReviews) {
+                return Promise.resolve([
+                    { user: { login: 'user1' }, state: 'APPROVED' },
+                    { user: { login: 'user2' }, state: 'CHANGES_REQUESTED' },
+                    { user: { login: 'user3' }, state: 'APPROVED' },
+                ]);
+            }
+        });
 
-    // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, 'Waiting 500 milliseconds ...')
-    expect(debugMock).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(timeRegex)
-    )
-    expect(debugMock).toHaveBeenNthCalledWith(
-      3,
-      expect.stringMatching(timeRegex)
-    )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      expect.stringMatching(timeRegex)
-    )
-    expect(errorMock).not.toHaveBeenCalled()
-  })
+        (octokit.rest.repos.getContent as unknown as jest.Mock).mockImplementation((() => {
+            return Promise.resolve({
+                data: {
+                    content:
+                        Buffer.from(getContentData).toString('base64')
+                }
+            });
+        }));
 
-  it('sets a failed status', async () => {
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation((name: string): string => {
-      switch (name) {
-        case 'milliseconds':
-          return 'this is not a number'
-        default:
-          return ''
-      }
-    })
+        (core.setFailed as unknown as jest.Mock).mockImplementation((message: string | Error) => {
+            console.log(message)
+            return message;
+        });
 
-    await main.run()
-    expect(runMock).toHaveReturned()
-
-    // Verify that all of the core library functions were called correctly
-    expect(setFailedMock).toHaveBeenNthCalledWith(
-      1,
-      'milliseconds not a number'
-    )
-    expect(errorMock).not.toHaveBeenCalled()
-  })
-})
+        await run(fakeContext, octokit, "")
+        expect(core.setFailed).not.toHaveBeenCalled()
+    });
+});

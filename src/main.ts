@@ -1,26 +1,40 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
+import { Context } from '@actions/github/lib/context';
+import { Octokit } from "@octokit/rest";
+import api from './api';
 
-/**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
- */
-export async function run(): Promise<void> {
+export async function run(ctx: Context, octokit: Octokit, configPath: string): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    core.info('Fetching configuration...');
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    let config;
+    let fail = false;
+    let failedGroups: string[] = [];
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    config = await api.fetchConfig(ctx, octokit, configPath);
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
-  } catch (error) {
-    // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message)
+    core.debug("Config: ");
+    core.debug(JSON.stringify(config));
+
+    for (let groupName in config.groups) {
+      const group = config.groups[groupName];
+      const approved = await api.getApprovedMembers(ctx, octokit, groupName)
+      let sign = "✅";
+
+      if (api.countIncluded<string>(new Set(group.members), approved) < group.required) {
+        sign = "❌";
+        fail = true;
+        failedGroups.push(groupName)
+      }
+
+      core.startGroup(`${sign} ${groupName}: (${approved.size}/${group.required}) approval(s).`);
+      core.endGroup();
+    }
+
+    if (fail) {
+      core.setFailed(`Need approval from these groups: ${failedGroups.join(', ')}`);
+    }
+  } catch (error: any) {
+    core.setFailed(error.message);
   }
 }
