@@ -29251,6 +29251,13 @@ async function run(ctx, octokit, configPath) {
                 fail = true;
                 failedTeams.push(teamName);
             }
+            // needed for tests
+            if (core.summary) {
+                await core.summary
+                    .addRaw(`<p>${sign} ${teamName}: (${approved.size}/${team.required}) ` +
+                    'approval(s)</p>', true)
+                    .write();
+            }
             core.startGroup(`${sign} ${teamName}: (${approved.size}/${team.required}) approval(s).`);
             core.endGroup();
         }

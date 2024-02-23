@@ -54,7 +54,7 @@ Default path for this configuration is `.github/custom_approval.yml
 Create personal access token with org:read permisions
 https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
 
-and add it as a secret to the repo
+and add it as a secret to the repository
 https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions
 
 Create a workflow file in `.github/workflows` (e.g. `.github/workflows/prod|stage|dev_approval.yml`):
@@ -67,13 +67,17 @@ on:
   pull_request_review:
     types: [editted, submitted]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   require_members_approval:
     name: Require Members Approval
     runs-on: ubuntu-latest
     steps:
       - name: Request review based on files changes and/or groups the author belongs to
-        uses: creotiv/custom-approval-management@v0.0.2
+        uses: creotiv/custom-approval-management@v0.0.4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           config: .github/custom_approval.yml # Config file location override
