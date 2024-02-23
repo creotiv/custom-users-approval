@@ -9,39 +9,39 @@ export async function run(
   configPath: string
 ): Promise<void> {
   try {
-    core.info('Fetching configuration...')
+    core.info('Fetching configuration')
 
     let fail = false
-    const failedGroups: string[] = []
+    const failedTeams: string[] = []
 
     const config = await api.fetchConfig(ctx, octokit, configPath)
 
     core.debug('Config: ')
     core.debug(JSON.stringify(config))
 
-    for (const groupName in config.groups) {
-      const group = config.groups[groupName]
-      const approved = await api.getApprovedMembers(ctx, octokit, groupName)
+    for (const teamName in config.teams) {
+      const team = config.teams[teamName]
+      const approved = await api.getApprovedMembers(ctx, octokit, teamName)
       let sign = '✅'
 
       if (
-        api.countIncluded<string>(new Set(group.members), approved) <
-        group.required
+        api.countIncluded<string>(new Set(team.members), approved) <
+        team.required
       ) {
         sign = '❌'
         fail = true
-        failedGroups.push(groupName)
+        failedTeams.push(teamName)
       }
 
       core.startGroup(
-        `${sign} ${groupName}: (${approved.size}/${group.required}) approval(s).`
+        `${sign} ${teamName}: (${approved.size}/${team.required}) approval(s).`
       )
       core.endGroup()
     }
 
     if (fail) {
       core.setFailed(
-        `Need approval from these groups: ${failedGroups.join(', ')}`
+        `Need approval from these teams: ${failedTeams.join(', ')}`
       )
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

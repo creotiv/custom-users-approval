@@ -56,7 +56,7 @@ const context = {
 }
 const fakeContext = context as Context
 
-const getContentData = `groups:
+const getContentData = `teams:
     fake-team:
         members:
             - user1

@@ -4,5 +4,5 @@ export interface ConfigGroup {
 }
 
 export interface Config {
-  groups: { [groupName: string]: ConfigGroup }
+  teams: { [teamName: string]: ConfigGroup }
 }

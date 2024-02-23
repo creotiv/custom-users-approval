@@ -1,5 +1,5 @@
-name: 'Custom User Approval'
-description: 'Set custom groups of users that needs to approve the PR'
+name: 'Custom Approval Management'
+description: 'Setup approval process for teams and members'
 author: 'creotiv'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.

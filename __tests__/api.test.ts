@@ -47,7 +47,7 @@ const context = {
   }
 }
 const fakeContext = context as Context
-const getContentData = `groups:
+const getContentData = `teams:
     fake-team:
         members:
             - user1
@@ -60,6 +60,7 @@ beforeEach(() => {
 describe('fetchConfig function', () => {
   it('throw error if not found', async () => {
     const octokit = new Octokit()
+
     ;(octokit.rest.repos.getContent as unknown as jest.Mock).mockImplementation(
       () => {
         throw new Error('Not Found')
@@ -80,6 +81,7 @@ describe('fetchConfig function', () => {
 
   it('return config object when file found and parsed', async () => {
     const octokit = new Octokit()
+
     ;(octokit.rest.repos.getContent as unknown as jest.Mock).mockImplementation(
       async () => {
         return Promise.resolve({
@@ -89,11 +91,12 @@ describe('fetchConfig function', () => {
         })
       }
     )
+
     const res = await api.fetchConfig(fakeContext, octokit, '')
     const cfg = res
 
     expect(cfg).toMatchObject({
-      groups: {
+      teams: {
         'fake-team': {
           members: ['user1'],
           required: 1
@@ -106,6 +109,7 @@ describe('fetchConfig function', () => {
 describe('getApprovedMembers function', () => {
   it('return approved users if team found and reviews exist', async () => {
     const octokit = new Octokit()
+
     ;(octokit.paginate as unknown as jest.Mock).mockImplementation(
       async method => {
         if (method === octokit.rest.teams.listMembersInOrg) {
@@ -134,6 +138,7 @@ describe('getApprovedMembers function', () => {
 
   it('return zero approved users if team found and no reviews', async () => {
     const octokit = new Octokit()
+
     ;(octokit.paginate as unknown as jest.Mock).mockImplementation(
       async method => {
         if (method === octokit.rest.teams.listMembersInOrg) {
