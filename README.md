@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Request review based on files changes and/or groups the author belongs to
-        uses: creotiv/custom-approval-management@v0.0.2
+        uses: creotiv/custom-approval-management@v0.0.3
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           config: .github/custom_approval.yml # Config file location override
