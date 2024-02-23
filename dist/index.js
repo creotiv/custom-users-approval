@@ -29235,27 +29235,27 @@ const core = __importStar(__nccwpck_require__(2186));
 const api_1 = __importDefault(__nccwpck_require__(8229));
 async function run(ctx, octokit, configPath) {
     try {
-        core.info('Fetching configuration...');
+        core.info('Fetching configuration');
         let fail = false;
-        const failedGroups = [];
+        const failedTeams = [];
         const config = await api_1.default.fetchConfig(ctx, octokit, configPath);
         core.debug('Config: ');
         core.debug(JSON.stringify(config));
-        for (const groupName in config.groups) {
-            const group = config.groups[groupName];
-            const approved = await api_1.default.getApprovedMembers(ctx, octokit, groupName);
+        for (const teamName in config.teams) {
+            const team = config.teams[teamName];
+            const approved = await api_1.default.getApprovedMembers(ctx, octokit, teamName);
             let sign = '✅';
-            if (api_1.default.countIncluded(new Set(group.members), approved) <
-                group.required) {
+            if (api_1.default.countIncluded(new Set(team.members), approved) <
+                team.required) {
                 sign = '❌';
                 fail = true;
-                failedGroups.push(groupName);
+                failedTeams.push(teamName);
             }
-            core.startGroup(`${sign} ${groupName}: (${approved.size}/${group.required}) approval(s).`);
+            core.startGroup(`${sign} ${teamName}: (${approved.size}/${team.required}) approval(s).`);
             core.endGroup();
         }
         if (fail) {
-            core.setFailed(`Need approval from these groups: ${failedGroups.join(', ')}`);
+            core.setFailed(`Need approval from these teams: ${failedTeams.join(', ')}`);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }
