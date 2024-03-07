@@ -29251,15 +29251,24 @@ async function run(ctx, octokit, configPath) {
                 fail = true;
                 failedTeams.push(teamName);
             }
+            // needed for tests
+            if (process.env.GITHUB_STEP_SUMMARY) {
+                await core.summary
+                    .addRaw(`<p>${sign} ${teamName}: (${approved.size}/${team.required}) ` +
+                    'approval(s)</p>', true)
+                    .write();
+            }
             core.startGroup(`${sign} ${teamName}: (${approved.size}/${team.required}) approval(s).`);
             core.endGroup();
         }
         if (fail) {
+            console.log('AAAA');
             core.setFailed(`Need approval from these teams: ${failedTeams.join(', ')}`);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }
     catch (error) {
+        console.log('bbbbb');
         core.setFailed(error.message);
     }
 }

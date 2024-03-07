@@ -1,16 +1,16 @@
 {
-  "name": "typescript-action",
+  "name": "custom-approval-management",
   "description": "Set custom groups of users that needs to approve the PR'",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "author": "",
   "private": true,
-  "homepage": "https://github.com/actions/typescript-action",
+  "homepage": "https://github.com/creotiv/custom-users-approval",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/creotiv/custom-users-approval.git"
   },
   "bugs": {
-    "url": "https://github.com/actions/typescript-action/issues"
+    "url": "https://github.com/creotiv/custom-users-approval/issues"
   },
   "keywords": [
     "actions",

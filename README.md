@@ -67,13 +67,17 @@ on:
   pull_request_review:
     types: [editted, submitted]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   require_members_approval:
     name: Require Members Approval
     runs-on: ubuntu-latest
     steps:
       - name: Request review based on files changes and/or groups the author belongs to
-        uses: creotiv/custom-approval-management@v0.0.3
+        uses: creotiv/custom-approval-management@v0.0.4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           config: .github/custom_approval.yml # Config file location override
