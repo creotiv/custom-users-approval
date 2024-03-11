@@ -70,7 +70,7 @@
     "@actions/github": "^6.0.0",
     "@octokit/rest": "^20.0.2",
     "@octokit/types": "^12.5.0",
-    "yaml": "^2.3.4"
+    "yaml": "^2.4.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
